@@ -1,0 +1,34 @@
+name: Importar catálogo FEDME PR
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descargar catálogo preparado desde GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download fedme-pr-data --pattern summit-fedme-catalog.zip --dir /tmp
+      - name: Extraer y verificar índice
+        run: |
+          unzip -q /tmp/summit-fedme-catalog.zip -d .
+          python3 - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('summit-fedme/catalog.json')
+          data=json.loads(p.read_text())
+          assert len(data['routes'])==1636, 'Número inesperado de rutas'
+          for r in data['routes']:
+              path=pathlib.Path('summit-fedme')/r['geometry_file']
+              assert path.is_file() and path.resolve().is_relative_to(pathlib.Path('summit-fedme').resolve()), str(path)
+          print('Verificadas',len(data['routes']),'rutas')
+          PY
+      - name: Publicar archivos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add summit-fedme
+          git commit -m "Importar 1636 senderos PR FEDME/CNIG" || exit 0
+          git push
