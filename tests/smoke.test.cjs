@@ -15,3 +15,7 @@ test('caché de rutas tiene caducidad y tamaño limitado',()=>{assert.match(scri
 test('búsqueda geográfica tiene tiempo máximo',()=>assert.match(script,/geocodeAbort\.abort\(\),9000/));
 test('búsqueda elimina identificadores repetidos',()=>assert.match(script,/seen\.has\(rel\.id\)/));
 test('metadatos de dificultad no se inventan',()=>{const fn=new Function(extract('function routeMetadata(', 'function routeQuality(')+';return routeMetadata')();assert.equal(fn({}).difficulty,null);assert.equal(fn({sac_scale:'mountain_hiking'}).difficulty,'mountain hiking')});
+
+test('desnivel suma solo cambios superiores al umbral',()=>{const fn=new Function(extract('function elevationStats(', 'function hikingDuration(')+';return elevationStats')();assert.deepEqual(fn([100,103,110,108,90]),{ascent:7,descent:18})});
+test('duración orientativa incluye ascenso',()=>{const fn=new Function(extract('function hikingDuration(', 'async function calculateElevation(')+';return hikingDuration')();assert.equal(fn(8,600),3);assert.equal(fn(0,100),null)});
+test('cálculo de elevación es bajo demanda',()=>assert.match(script,/elevation\.onclick=\(\)=>calculateElevation/));
