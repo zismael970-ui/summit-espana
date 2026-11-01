@@ -10,3 +10,8 @@ const way=points=>({type:'way',geometry:points.map(([lat,lon])=>({lat,lon}))});
 test('unifica tramos GPX desordenados y en sentido contrario',()=>{const lines=routeFns.routeCoords({members:[way([[40,-3],[40.001,-3]]),way([[40.002,-3],[40.001,-3]])]});assert.equal(lines.length,1);assert.equal(lines[0].length,3);assert.ok(routeFns.routeQuality(lines).connected)});
 test('no conecta tramos separados con líneas ficticias',()=>{const lines=routeFns.routeCoords({members:[way([[40,-3],[40.001,-3]]),way([[41,-3],[41.001,-3]])]});assert.equal(lines.length,2);assert.equal(routeFns.routeQuality(lines).connected,false)});
 test('rechaza puntos cartográficos inválidos',()=>{const lines=routeFns.routeCoords({members:[way([[95,-3],[40,-3],[40.001,-3]])]});assert.equal(lines.length,1);assert.equal(lines[0].length,2)});
+
+test('caché de rutas tiene caducidad y tamaño limitado',()=>{assert.match(script,/SEARCH_CACHE_TTL=24\*60\*60\*1000/);assert.match(script,/slice\(0,8\)/)});
+test('búsqueda geográfica tiene tiempo máximo',()=>assert.match(script,/geocodeAbort\.abort\(\),9000/));
+test('búsqueda elimina identificadores repetidos',()=>assert.match(script,/seen\.has\(rel\.id\)/));
+test('metadatos de dificultad no se inventan',()=>{const fn=new Function(extract('function routeMetadata(', 'function routeQuality(')+';return routeMetadata')();assert.equal(fn({}).difficulty,null);assert.equal(fn({sac_scale:'mountain_hiking'}).difficulty,'mountain hiking')});
