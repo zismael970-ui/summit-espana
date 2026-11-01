@@ -4,9 +4,6 @@ on:
   push:
     paths:
       - '.github/workflows/publish-fedme-jaen.yml'
-  push:
-    paths:
-      - '.github/workflows/publish-fedme-jaen.yml'
 permissions:
   contents: write
   actions: read
