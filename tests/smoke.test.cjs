@@ -4,3 +4,9 @@ test('GPX valida latitud y longitud antes de dibujar',()=>{assert.match(script,/
 test('perfil de elevación limita segmentos de dibujo',()=>assert.match(script,/Math\.ceil\(elev\.length\/500\)/));
 test('el buscador recupera de servidores alternativos',()=>{assert.match(script,/OVERPASS_SERVERS/);assert.match(script,/overpass\.private\.coffee/);assert.match(script,/overpass-api\.de/)});
 test('rutas guardadas toleran JSON dañado',()=>assert.match(script,/Rutas guardadas dañadas/));
+
+const routeFns=new Function(extract('const rad=','function renderRoute')+extract('function routeCoords(','function routeGpx(')+';return {routeCoords,routeQuality,routeLength}')();
+const way=points=>({type:'way',geometry:points.map(([lat,lon])=>({lat,lon}))});
+test('unifica tramos GPX desordenados y en sentido contrario',()=>{const lines=routeFns.routeCoords({members:[way([[40,-3],[40.001,-3]]),way([[40.002,-3],[40.001,-3]])]});assert.equal(lines.length,1);assert.equal(lines[0].length,3);assert.ok(routeFns.routeQuality(lines).connected)});
+test('no conecta tramos separados con líneas ficticias',()=>{const lines=routeFns.routeCoords({members:[way([[40,-3],[40.001,-3]]),way([[41,-3],[41.001,-3]])]});assert.equal(lines.length,2);assert.equal(routeFns.routeQuality(lines).connected,false)});
+test('rechaza puntos cartográficos inválidos',()=>{const lines=routeFns.routeCoords({members:[way([[95,-3],[40,-3],[40.001,-3]])]});assert.equal(lines.length,1);assert.equal(lines[0].length,2)});
