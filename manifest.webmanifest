@@ -1,0 +1,9 @@
+{
+  "name": "SUMMIT España",
+  "short_name": "SUMMIT",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f8f6",
+  "theme_color": "#163b31"
+}
