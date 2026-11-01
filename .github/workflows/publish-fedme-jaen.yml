@@ -1,0 +1,44 @@
+name: Publicar piloto FEDME Jaén
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/publish-fedme-jaen.yml'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descargar resultado verificado de la ejecución piloto
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/fedme-pilot data
+          gh run download 41327173910 --repo "${{ github.repository }}" --name fedme-jaen-pilot --dir /tmp/fedme-pilot
+          cp /tmp/fedme-pilot/fedme-jaen-pilot.json data/fedme-jaen-pilot.json
+      - name: Verificar contenido antes de publicar
+        run: |
+          python3 - <<'PY'
+          import json
+          from collections import Counter
+          p='data/fedme-jaen-pilot.json'
+          data=json.load(open(p))
+          routes=data['routes']
+          assert len(routes)==221, len(routes)
+          assert len({r['id'] for r in routes})==len(routes)
+          assert not data['failed_tiles']
+          assert all(r['gpx_url'].startswith('https://centrodedescargas.cnig.es/') for r in routes)
+          print('OK',len(routes),'rutas',dict(Counter(r['type'] for r in routes)))
+          PY
+      - name: Publicar índice
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/fedme-jaen-pilot.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Publicar catálogo piloto FEDME Jaén con 221 rutas"
+          git push
