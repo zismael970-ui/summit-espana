@@ -1,0 +1,23 @@
+name: Diagnóstico de teselas FEDME
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/diagnose-fedme.yml'
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar decodificador MVT
+        run: python -m pip install --quiet mapbox-vector-tile
+      - name: Consultar tres teselas de muestra
+        run: python scripts/inspect-fedme-tiles.py | tee fedme-diagnostic.json
+      - name: Guardar informe
+        uses: actions/upload-artifact@v4
+        with:
+          name: fedme-diagnostic
+          path: fedme-diagnostic.json
